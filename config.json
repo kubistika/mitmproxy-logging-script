@@ -1,0 +1,17 @@
+{
+    "log_path": "http_logs.txt",
+    "request": {
+        "include_headers": true,
+        "additional_fields": [
+            "url",
+            "method",
+            "scheme",
+            {"original_name": "http_version", "map_to": "version"},
+            "host",
+            {"original_name": "port", "map_to": "dst_port"}
+        ]
+    },
+    "response": {
+        "include_headers": true
+    }
+}
