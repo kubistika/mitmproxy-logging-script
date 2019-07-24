@@ -35,8 +35,12 @@ class RequestsLogger:
             self.config = json.load(f)
 
         # Logger initialization
-        logging.basicConfig(handlers=[RotatingFileHandler(self.config['log_path'], maxBytes=MAX_LOG_FILE_SIZE_BYTES, backupCount=BACKUP_COUNT)],
-                            level=logging.INFO, format='%(levelname)s - %(message)s')
+        rotating_handler = RotatingFileHandler(self.config['log_path'],
+                                               maxBytes=MAX_LOG_FILE_SIZE_BYTES,
+                                               backupCount=BACKUP_COUNT)
+        logging.basicConfig(handlers=[rotating_handler],
+                            level=logging.INFO,
+                            format='%(levelname)s - %(message)s')
 
     def done(self):
         # close all log handlers.
