@@ -4,13 +4,21 @@ import os
 import json
 import signal
 import logging
+import socket
 
+from logging.handlers import RotatingFileHandler
 from mitmproxy import ctx
 from datetime import datetime
 from http.client import responses
 
 # Configuration path
 CONFIG_PATH = "config.json"
+
+# Max log size
+MAX_LOG_FILE_SIZE_BYTES = 1024 * 1024 * 1024
+
+# Max backup log files
+BACKUP_COUNT = 10
 
 """
 RequestsLogger is an addon for mitmdump that logs information about request
@@ -27,8 +35,8 @@ class RequestsLogger:
             self.config = json.load(f)
 
         # Logger initialization
-        logging.basicConfig(filename=self.config['log_path'],
-                            filemode='w', level=logging.INFO, format='%(levelname)s - %(message)s')
+        logging.basicConfig(handlers=[RotatingFileHandler(self.config['log_path'], maxBytes=MAX_LOG_FILE_SIZE_BYTES, backupCount=BACKUP_COUNT)],
+                            level=logging.INFO, format='%(levelname)s - %(message)s')
 
     def done(self):
         # close all log handlers.
@@ -57,6 +65,7 @@ class RequestsLogger:
             "request": {
                 "time": str(datetime.now()),
                 "client_info": {
+                    "hostname": socket.gethostname(),
                     "src_addr": client_conn.address[0],
                     "src_port": client_conn.address[1],
                 },
