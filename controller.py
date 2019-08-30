@@ -31,4 +31,5 @@ def update_config():
     return Response(status=200)
 
 
-app.run("0.0.0.0", 8080)
+def run_server():
+    app.run("localhost", 9999)

@@ -11,6 +11,8 @@ from mitmproxy import ctx
 from datetime import datetime
 from http.client import responses
 
+from controller import run_server
+
 # Configuration path
 CONFIG_PATH = "config.json"
 
@@ -35,12 +37,15 @@ class RequestsLogger:
             self.config = json.load(f)
 
         # Logger initialization
-        rotating_handler = RotatingFileHandler(self.config['log_path'],
+        rotating_handler = RotatingFileHandler(self.config['logPath'],
                                                maxBytes=MAX_LOG_FILE_SIZE_BYTES,
                                                backupCount=BACKUP_COUNT)
         logging.basicConfig(handlers=[rotating_handler],
                             level=logging.INFO,
                             format='%(levelname)s - %(message)s')
+
+        # Run controller server
+        run_server()
 
     def done(self):
         # close all log handlers.
@@ -81,11 +86,11 @@ class RequestsLogger:
             }
         }
 
-        if 'requestInfo' in self.config['request']:
+        if 'requestInfo' in self.config:
             self.add_custom_fields(
                 info['request'], flow.request, self.config['requestInfo'])
 
-        if 'responseInfo' in self.config['request']:
+        if 'responseInfo' in self.config:
             self.add_custom_fields(
                 info['response'], flow.response, self.config['responseInfo'])
 

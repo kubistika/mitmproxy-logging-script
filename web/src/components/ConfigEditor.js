@@ -40,10 +40,10 @@ class ConfigEditor extends React.Component {
     c.responseHeaders = c.responseHeaders.split(', ');
 
     try {
-      api.saveConfig(c);
-      alert('config saved!');
+      await api.saveConfig(c);
+      alert('Config saved!');
     } catch {
-      alert('error');
+      alert('Error: server might be down.');
     }
   }
 
