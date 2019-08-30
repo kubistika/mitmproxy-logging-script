@@ -8,15 +8,16 @@
     "requestInfo": {
         "url": true,
         "host": true,
-        "method": true,
+        "method": false,
         "scheme": true
     },
-    "includeAllResponseHeaders": true,
+    "includeAllResponseHeaders": false,
     "responseHeaders": [
         "Content-Length",
-        "Content-Type"
+        "Content-Type",
+        "test"
     ],
     "responseInfo": {
-        "version": false
+        "version": true
     }
 }

@@ -37,13 +37,9 @@ class RequestsLogger:
             logging.root.removeHandler(handler)
 
     def add_custom_fields(self, target_obj, src_obj, custom_fields):
-        for key in custom_fields:
-            if type(key) is str:
+        for key in custom_fields.keys():
+            if custom_fields[key]:
                 target_obj[key] = getattr(src_obj, key)
-            else:
-                key_in_http_req = key['original_name']
-                key_in_info_obj = key['map_to']
-                target_obj[key_in_info_obj] = getattr(src_obj, key_in_http_req)
 
     """ 
     This hook function is called by `mitmdump` whenever a response is received from a target server.
@@ -52,6 +48,7 @@ class RequestsLogger:
 
     def response(self, flow):
         client_conn = flow.client_conn
+        server_conn = flow.server_conn
 
         info = {
             "request": {
@@ -60,6 +57,10 @@ class RequestsLogger:
                     "src_addr": client_conn.address[0],
                     "src_port": client_conn.address[1],
                 },
+                "target_info": {
+                    "dst_addr": server_conn.ip_address[0],
+                    "dst_port": server_conn.ip_address[1],
+                }
             },
             "response": {
                 "status_code": flow.response.status_code,
@@ -67,18 +68,18 @@ class RequestsLogger:
             }
         }
 
-        if 'additional_fields' in self.config['request']:
+        if 'requestInfo' in self.config['request']:
             self.add_custom_fields(
-                info['request'], flow.request, self.config['request']['additional_fields'])
+                info['request'], flow.request, self.config['requestInfo'])
 
-        if 'additional_fields' in self.config['response']:
+        if 'responseInfo' in self.config['request']:
             self.add_custom_fields(
-                info['request'], flow.response, self.config['response']['additional_fields'])
+                info['response'], flow.response, self.config['responseInfo'])
 
-        if self.config['request']['include_headers']:
+        if self.config['includeAllRequestHeaders']:
             info['request']['headers'] = dict(flow.request.headers)
 
-        if self.config['response']['include_headers']:
+        if self.config['includeAllResponseHeaders']:
             info['response']['headers'] = dict(flow.response.headers)
 
         logging.info(json.dumps(info, indent=2))

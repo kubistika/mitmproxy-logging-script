@@ -1,0 +1,24 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+h3 {
+  font-family: arial;
+}
+.top {
+  background: #eee;
+  width: 100%;
+  height: 60px;
+  margin-bottom: 10px;
+}
+
+.top h3 {
+  line-height: 58px;
+}
+
+.App-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 40vmin;
+  pointer-events: none;
+}
