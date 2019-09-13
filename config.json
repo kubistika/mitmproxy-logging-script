@@ -1,22 +1,27 @@
 {
+    "suggestions": [],
     "loaded": true,
     "logPath": "http_logs.txt",
-    "includeAllRequestHeaders": true,
-    "requestHeaders": [
-        ""
-    ],
-    "requestInfo": {
-        "url": true,
-        "host": true,
-        "method": true,
-        "scheme": true
+    "request": {
+        "headers": [
+            "*"
+        ],
+        "fields": [
+            "scheme",
+            "version",
+            "method"
+        ]
     },
-    "includeAllResponseHeaders": true,
-    "responseHeaders": [
-        "Content-Length",
-        "Content-Type"
-    ],
-    "responseInfo": {
-        "version": false
-    }
+    "response": {
+        "headers": [
+            "Content-Type"
+        ],
+        "fields": [
+            "version",
+            "method"
+        ]
+    },
+    "add_field_to_request.fields": "",
+    "undefined": 0,
+    "add_field_to_response.fields": ""
 }

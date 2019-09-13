@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
+  Row,
+  Container,
+  Col,
   Button,
   Form,
   Checkbox,
@@ -13,22 +16,89 @@ import {
   InputGroupAddon,
   InputGroupText,
 } from 'reactstrap';
+import { get, set, omit, remove } from 'lodash';
+import { MdRemoveCircle as MdCancel } from 'react-icons/md';
 
 import * as api from '../api/config';
+import AutoSuggestionInput from './AutoSuggest';
+
+const optionalHttpFields = ['method', 'url', 'host', 'version', 'scheme'];
+const optionalHeaders = [
+  'Access-Control-Allow-Credentials',
+  'Access-Control-Allow-Headers',
+  'Access-Control-Allow-Methods',
+  'Access-Control-Allow-Origin',
+  'Access-Control-Expose-Headers',
+  'Access-Control-Max-Age',
+  'Accept-Ranges',
+  'Age',
+  'Allow',
+  'Alternate-Protocol',
+  'Cache-Control',
+  'Client-Date',
+  'Client-Peer',
+  'Client-Response-Num',
+  'Connection',
+  'Content-Disposition',
+  'Content-Encoding',
+  'Content-Language',
+  'Content-Length',
+  'Content-Location',
+  'Content-MD5',
+  'Content-Range',
+  'Content-Security-Policy, X-Content-Security-Policy, X-WebKit-CSP',
+  'Content-Security-Policy-Report-Only',
+  'Content-Type',
+  'Date',
+  'ETag',
+  'Expires',
+  'HTTP',
+  'Keep-Alive',
+  'Last-Modified',
+  'Link',
+  'Location',
+  'P3P',
+  'Pragma',
+  'Proxy-Authenticate',
+  'Proxy-Connection',
+  'Refresh',
+  'Retry-After',
+  'Server',
+  'Set-Cookie',
+  'Status',
+  'Strict-Transport-Security',
+  'Timing-Allow-Origin',
+  'Trailer',
+  'Transfer-Encoding',
+  'Upgrade',
+  'Vary',
+  'Via',
+  'Warning',
+  'WWW-Authenticate',
+  'X-Aspnet-Version',
+  'X-Content-Type-Options',
+  'X-Frame-Options',
+  'X-Permitted-Cross-Domain-Policies',
+  'X-Pingback',
+  'X-Powered-By',
+  'X-Robots-Tag',
+  'X-UA-Compatible',
+  'X-XSS-Protection',
+];
 
 class ConfigEditor extends React.Component {
   constructor(props) {
     super(props);
 
-    this.state = { loaded: false };
+    this.state = { suggestions: [], loaded: false };
   }
 
   async componentDidMount() {
     const { data } = await api.getConfig();
 
     // Make arrays human readable.
-    data.requestHeaders = data.requestHeaders.join(', ');
-    data.responseHeaders = data.responseHeaders.join(', ');
+    //data.requestHeaders = data.requestHeaders.join(', ');
+    //data.responseHeaders = data.responseHeaders.join(', ');
 
     // Update state with current configuration.
     this.setState({ ...data, loaded: true });
@@ -36,8 +106,7 @@ class ConfigEditor extends React.Component {
 
   async onSubmit() {
     let c = { ...this.state };
-    c.requestHeaders = c.requestHeaders.split(', ');
-    c.responseHeaders = c.responseHeaders.split(', ');
+    omit(c, 'loaded');
 
     try {
       await api.saveConfig(c);
@@ -48,6 +117,7 @@ class ConfigEditor extends React.Component {
   }
 
   handleInputChange(event) {
+    event.persist();
     let newState = Object.assign({}, this.state);
 
     const target = event.target;
@@ -58,38 +128,87 @@ class ConfigEditor extends React.Component {
     this.setState(newState);
   }
 
-  handleFieldChange(event, isRequest) {
+  handleFieldChange(event) {
     let newState = Object.assign({}, this.state);
 
     const target = event.target;
     const value = target.type === 'checkbox' ? target.checked : target.value;
     const name = target.name;
 
-    console.log(isRequest);
-    if (isRequest) {
-      newState.requestInfo[name] = value;
-    } else {
-      newState.responseInfo[name] = value;
-    }
+    set(newState, name, value);
     this.setState(newState);
   }
 
-  renderFields(isRequest) {
-    const fields = isRequest ? this.state.requestInfo : this.state.responseInfo;
+  addField(parent, value) {
+    const currentFields = get(this.state, parent);
+    let fields;
+    if (this.isAllFields(currentFields)) fields = [value];
+    else {
+      fields = [...get(this.state, parent)];
+      if (fields.indexOf(value) != -1) return;
+      fields.push(value);
+    }
+    set(this.state, parent, fields);
+    this.setState(this.state);
+  }
 
-    return Object.keys(fields).map((key, index) => {
-      return (
-        <CustomInput
-          key={`${isRequest}_${key}`}
-          id={`${isRequest}_${key}`}
-          type="checkbox"
-          label={key}
-          name={key}
-          checked={fields[key]}
-          onChange={e => this.handleFieldChange(e, isRequest)}
+  isAllFields(fields) {
+    return fields.length === 1 && fields[0] === '*';
+  }
+
+  removeField(parent, key) {
+    let fields = [...get(this.state, parent)];
+    fields.splice(key, 1);
+    set(this.state, parent, fields);
+    this.setState(this.state);
+  }
+
+  onSuggestionSelected = (parent, suggestion) => {
+    this.addField(parent, suggestion);
+    this.setState({ ['add_field_to_' + parent]: '' });
+  };
+
+  renderFields(getter, placeholder, optionalValues) {
+    let renderedList;
+    const fields = get(this.state, getter);
+
+    if (fields.length === 1 && fields[0] === '*') renderedList = 'All fields!';
+    else {
+      renderedList = fields.map((key, index) => {
+        return (
+          <li key={index}>
+            <MdCancel
+              onClick={() => this.removeField(getter, index)}
+              size={30}
+              color="red"
+              style={{ marginRight: '10px' }}
+            />
+            <span>{key}</span>
+          </li>
+        );
+      });
+    }
+
+    const inputProps = {
+      name: 'add_field_to_' + getter,
+      placeholder,
+      value: this.state['add_field_to_' + getter] || '',
+      onChange: e => this.handleInputChange(e),
+    };
+
+    return (
+      <>
+        <ul className="proxy-fields">{renderedList}</ul>
+        <AutoSuggestionInput
+          id={getter}
+          optionalValues={optionalValues}
+          onSuggestionSelected={suggestion =>
+            this.onSuggestionSelected(getter, suggestion)
+          }
+          inputProps={inputProps}
         />
-      );
-    });
+      </>
+    );
   }
 
   renderHeadersInput(isRequest) {
@@ -134,7 +253,7 @@ class ConfigEditor extends React.Component {
     if (!this.state.loaded) return '';
 
     return (
-      <div>
+      <Container>
         <Form>
           <FormGroup>
             <Label for="logPath">Log path</Label>
@@ -147,19 +266,51 @@ class ConfigEditor extends React.Component {
               onChange={e => this.handleInputChange(e)}
             />
           </FormGroup>
-          <FormGroup>{this.renderHeadersInput(true)}</FormGroup>
-          <FormGroup>
-            <Label>Additional request fields</Label>
-            <div>{this.renderFields(true)}</div>
-          </FormGroup>
-          <FormGroup>{this.renderHeadersInput(false)}</FormGroup>
-          <FormGroup>
-            <Label>Additional response fields</Label>
-            <div>{this.renderFields(false)}</div>
-          </FormGroup>
+          <Row>
+            <Col>
+              <FormGroup>
+                <h3>Request headers</h3>
+                {this.renderFields(
+                  'request.headers',
+                  'Add HTTP header',
+                  optionalHeaders,
+                )}
+              </FormGroup>
+              <FormGroup>
+                <h3>Additional request fields</h3>
+                <div>
+                  {this.renderFields(
+                    'request.fields',
+                    'Add HTTP field',
+                    optionalHttpFields,
+                  )}
+                </div>
+              </FormGroup>
+            </Col>
+            <Col>
+              <FormGroup>
+                <h3>Response headers</h3>
+                {this.renderFields(
+                  'response.headers',
+                  'Add HTTP header',
+                  optionalHeaders,
+                )}
+              </FormGroup>
+              <FormGroup>
+                <h3>Additional response fields</h3>
+                <div>
+                  {this.renderFields(
+                    'response.fields',
+                    'Add HTTP field',
+                    optionalHttpFields,
+                  )}
+                </div>
+              </FormGroup>
+            </Col>
+          </Row>
           <Button onClick={() => this.onSubmit()}>Submit</Button>
         </Form>
-      </div>
+      </Container>
     );
   }
 }
