@@ -11,8 +11,6 @@ from mitmproxy import ctx
 from datetime import datetime
 from http.client import responses
 
-from controller import run_server
-
 # Configuration path
 CONFIG_PATH = "config.json"
 
@@ -44,9 +42,6 @@ class RequestsLogger:
                             level=logging.INFO,
                             format='%(levelname)s - %(message)s')
 
-        # Run controller server
-        run_server()
-
     def done(self):
         # close all log handlers.
         for handler in logging.root.handlers[:]:
@@ -57,6 +52,16 @@ class RequestsLogger:
         for key in custom_fields.keys():
             if custom_fields[key]:
                 target_obj[key] = getattr(src_obj, key)
+
+    def filter_headers(self,  all_headers, wanted_headers):
+        // All headers should be returned.
+        if len(wanted_headers) == 1 and wanted_headers[0] == '*':
+            return all_headers
+
+        result = {}
+        for header_name in wanted_headers:
+            if header_name in all_headers:
+                result[header_name] = all_headers[header_name]
 
     """ 
     This hook function is called by `mitmdump` whenever a response is received from a target server.
@@ -86,19 +91,18 @@ class RequestsLogger:
             }
         }
 
-        if 'requestInfo' in self.config:
+        if 'fields' in self.config['request']:
             self.add_custom_fields(
-                info['request'], flow.request, self.config['requestInfo'])
+                info['request'], flow.request, self.config['request']['fields'])
 
-        if 'responseInfo' in self.config:
+        if 'fields' in self.config['response']:
             self.add_custom_fields(
-                info['response'], flow.response, self.config['responseInfo'])
+                info['response'], flow.response, self.config['response']['fields'])
 
-        if self.config['includeAllRequestHeaders']:
-            info['request']['headers'] = dict(flow.request.headers)
-
-        if self.config['includeAllResponseHeaders']:
-            info['response']['headers'] = dict(flow.response.headers)
+        info['request']['headers'] = filter_headers(
+            dict(flow.request.headers), config['request']['headers'])
+        info['response']['headers'] = filter_headers(
+            dict(flow.response.headers), config['response']['headers'])
 
         logging.info(json.dumps(info, indent=2))
 

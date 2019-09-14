@@ -1,27 +1,22 @@
 {
-    "suggestions": [],
-    "loaded": true,
-    "logPath": "http_logs.txt",
     "request": {
         "headers": [
-            "*"
+            "Content-Encoding",
+            "Content-Type"
         ],
         "fields": [
             "scheme",
             "version",
-            "method"
+            "host"
         ]
     },
     "response": {
         "headers": [
-            "Content-Type"
+            "Access-Control-Allow-Headers"
         ],
         "fields": [
-            "version",
             "method"
         ]
     },
-    "add_field_to_request.fields": "",
-    "undefined": 0,
-    "add_field_to_response.fields": ""
+    "logPath": "http_logs.txt"
 }

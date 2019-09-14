@@ -43,7 +43,7 @@ class AutoSuggestionInput extends React.Component {
     const inputLength = inputValue.length;
 
     if (inputLength === 0) return [];
-    return optionalValues.filter(o => o.toLowerCase().includes(value));
+    return optionalValues.filter(o => o.toLowerCase().includes(inputValue));
   };
 
   onSuggestionsFetchRequested = ({ value }) => {

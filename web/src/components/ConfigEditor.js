@@ -21,92 +21,43 @@ import { MdRemoveCircle as MdCancel } from 'react-icons/md';
 
 import * as api from '../api/config';
 import AutoSuggestionInput from './AutoSuggest';
-
-const optionalHttpFields = ['method', 'url', 'host', 'version', 'scheme'];
-const optionalHeaders = [
-  'Access-Control-Allow-Credentials',
-  'Access-Control-Allow-Headers',
-  'Access-Control-Allow-Methods',
-  'Access-Control-Allow-Origin',
-  'Access-Control-Expose-Headers',
-  'Access-Control-Max-Age',
-  'Accept-Ranges',
-  'Age',
-  'Allow',
-  'Alternate-Protocol',
-  'Cache-Control',
-  'Client-Date',
-  'Client-Peer',
-  'Client-Response-Num',
-  'Connection',
-  'Content-Disposition',
-  'Content-Encoding',
-  'Content-Language',
-  'Content-Length',
-  'Content-Location',
-  'Content-MD5',
-  'Content-Range',
-  'Content-Security-Policy, X-Content-Security-Policy, X-WebKit-CSP',
-  'Content-Security-Policy-Report-Only',
-  'Content-Type',
-  'Date',
-  'ETag',
-  'Expires',
-  'HTTP',
-  'Keep-Alive',
-  'Last-Modified',
-  'Link',
-  'Location',
-  'P3P',
-  'Pragma',
-  'Proxy-Authenticate',
-  'Proxy-Connection',
-  'Refresh',
-  'Retry-After',
-  'Server',
-  'Set-Cookie',
-  'Status',
-  'Strict-Transport-Security',
-  'Timing-Allow-Origin',
-  'Trailer',
-  'Transfer-Encoding',
-  'Upgrade',
-  'Vary',
-  'Via',
-  'Warning',
-  'WWW-Authenticate',
-  'X-Aspnet-Version',
-  'X-Content-Type-Options',
-  'X-Frame-Options',
-  'X-Permitted-Cross-Domain-Policies',
-  'X-Pingback',
-  'X-Powered-By',
-  'X-Robots-Tag',
-  'X-UA-Compatible',
-  'X-XSS-Protection',
-];
+import { optionalHttpHeaders, optionalHttpFields } from './HttpConsts';
 
 class ConfigEditor extends React.Component {
   constructor(props) {
     super(props);
 
-    this.state = { suggestions: [], loaded: false };
+    this.state = {
+      loaded: false,
+    };
   }
 
   async componentDidMount() {
     const { data } = await api.getConfig();
 
-    // Make arrays human readable.
-    //data.requestHeaders = data.requestHeaders.join(', ');
-    //data.responseHeaders = data.responseHeaders.join(', ');
-
     // Update state with current configuration.
-    this.setState({ ...data, loaded: true });
+    const state = { ...data, loaded: true };
+    state.request.includeAllHeaders = this.isAllFields(state.request.headers);
+    state.response.includeAllHeaders = this.isAllFields(state.response.headers);
+    this.setState(state);
   }
 
   async onSubmit() {
     let c = { ...this.state };
-    omit(c, 'loaded');
+
+    // Remove all non-config values from state before sending it to the server
+    c = omit(c, [
+      'loaded',
+      'add_field_to_request.headers',
+      'add_field_to_request.fields',
+      'add_field_to_response.fields',
+      'add_field_to_response.headers',
+      'request.includeAllHeaders',
+      'response.includeAllHeaders',
+    ]);
+
+    if (this.state.request.includeAllHeaders) c.request.headers = ['*'];
+    if (this.state.response.includeAllHeaders) c.response.headers = ['*'];
 
     try {
       await api.saveConfig(c);
@@ -117,37 +68,41 @@ class ConfigEditor extends React.Component {
   }
 
   handleInputChange(event) {
-    event.persist();
     let newState = Object.assign({}, this.state);
 
     const target = event.target;
     const value = target.type === 'checkbox' ? target.checked : target.value;
     const name = target.name;
 
-    newState[name] = value;
-    this.setState(newState);
-  }
-
-  handleFieldChange(event) {
-    let newState = Object.assign({}, this.state);
-
-    const target = event.target;
-    const value = target.type === 'checkbox' ? target.checked : target.value;
-    const name = target.name;
-
-    set(newState, name, value);
+    console.log(name);
+    switch (name) {
+      case 'request.includeAllHeaders':
+        console.log('here!');
+        newState.request.includeAllHeaders = !newState.request
+          .includeAllHeaders;
+        break;
+      case 'response.includeAllHeaders':
+        newState.response.includeAllHeaders = !newState.response
+          .includeAllHeaders;
+        break;
+      default:
+        newState[name] = value;
+        break;
+    }
     this.setState(newState);
   }
 
   addField(parent, value) {
-    const currentFields = get(this.state, parent);
     let fields;
+    const currentFields = get(this.state, parent);
+
     if (this.isAllFields(currentFields)) fields = [value];
     else {
       fields = [...get(this.state, parent)];
-      if (fields.indexOf(value) != -1) return;
+      if (fields.indexOf(value) !== -1) return;
       fields.push(value);
     }
+
     set(this.state, parent, fields);
     this.setState(this.state);
   }
@@ -172,7 +127,7 @@ class ConfigEditor extends React.Component {
     let renderedList;
     const fields = get(this.state, getter);
 
-    if (fields.length === 1 && fields[0] === '*') renderedList = 'All fields!';
+    if (fields.length === 1 && fields[0] === '*') renderedList = '';
     else {
       renderedList = fields.map((key, index) => {
         return (
@@ -211,43 +166,6 @@ class ConfigEditor extends React.Component {
     );
   }
 
-  renderHeadersInput(isRequest) {
-    const key = isRequest
-      ? 'includeAllRequestHeaders'
-      : 'includeAllResponseHeaders';
-    const values = isRequest
-      ? this.state.requestHeaders
-      : this.state.responseHeaders;
-    const help = isRequest
-      ? ' Include all request headers'
-      : ' Include all response headers';
-
-    return (
-      <InputGroup>
-        <InputGroupAddon addonType="prepend">
-          <InputGroupText>
-            <Input
-              addon
-              type="checkbox"
-              checked={this.state[key]}
-              name={key}
-              onChange={e => this.handleInputChange(e)}
-              aria-label="Comma seperated headers"
-            />
-            <span style={{ marginLeft: '8px' }}>{help}</span>
-          </InputGroupText>
-        </InputGroupAddon>
-        <Input
-          value={values}
-          name={isRequest ? 'requestHeaders' : 'responseHeaders'}
-          onChange={e => this.handleInputChange(e)}
-          placeholder="Comma separated headers"
-          disabled={this.state[key]}
-        />
-      </InputGroup>
-    );
-  }
-
   render() {
     // only render after configuration loaded.
     if (!this.state.loaded) return '';
@@ -256,6 +174,7 @@ class ConfigEditor extends React.Component {
       <Container>
         <Form>
           <FormGroup>
+            <h3>General settings</h3>
             <Label for="logPath">Log path</Label>
             <Input
               type="text"
@@ -270,11 +189,21 @@ class ConfigEditor extends React.Component {
             <Col>
               <FormGroup>
                 <h3>Request headers</h3>
-                {this.renderFields(
-                  'request.headers',
-                  'Add HTTP header',
-                  optionalHeaders,
-                )}
+                <Label style={{ marginLeft: '25px' }}>
+                  <Input
+                    type="checkbox"
+                    checked={this.state.request.includeAllHeaders}
+                    name="request.includeAllHeaders"
+                    onChange={e => this.handleInputChange(e)}
+                  />{' '}
+                  Include all
+                </Label>
+                {!this.state.request.includeAllHeaders &&
+                  this.renderFields(
+                    'request.headers',
+                    'Add HTTP header',
+                    optionalHttpHeaders,
+                  )}
               </FormGroup>
               <FormGroup>
                 <h3>Additional request fields</h3>
@@ -290,11 +219,21 @@ class ConfigEditor extends React.Component {
             <Col>
               <FormGroup>
                 <h3>Response headers</h3>
-                {this.renderFields(
-                  'response.headers',
-                  'Add HTTP header',
-                  optionalHeaders,
-                )}
+                <Label style={{ marginLeft: '25px' }}>
+                  <Input
+                    type="checkbox"
+                    name="response.includeAllHeaders"
+                    checked={this.state.response.includeAllHeaders}
+                    onChange={e => this.handleInputChange(e)}
+                  />{' '}
+                  Include all
+                </Label>
+                {!this.state.response.includeAllHeaders &&
+                  this.renderFields(
+                    'response.headers',
+                    'Add HTTP header',
+                    optionalHttpHeaders,
+                  )}
               </FormGroup>
               <FormGroup>
                 <h3>Additional response fields</h3>
