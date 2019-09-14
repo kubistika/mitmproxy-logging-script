@@ -49,12 +49,11 @@ class RequestsLogger:
             logging.root.removeHandler(handler)
 
     def add_custom_fields(self, target_obj, src_obj, custom_fields):
-        for key in custom_fields.keys():
-            if custom_fields[key]:
-                target_obj[key] = getattr(src_obj, key)
+        for field_name in custom_fields:
+            target_obj[field_name] = getattr(src_obj, field_name)
 
     def filter_headers(self,  all_headers, wanted_headers):
-        // All headers should be returned.
+        # All headers should be returned.
         if len(wanted_headers) == 1 and wanted_headers[0] == '*':
             return all_headers
 
@@ -62,6 +61,8 @@ class RequestsLogger:
         for header_name in wanted_headers:
             if header_name in all_headers:
                 result[header_name] = all_headers[header_name]
+
+        return result
 
     """ 
     This hook function is called by `mitmdump` whenever a response is received from a target server.
@@ -99,10 +100,10 @@ class RequestsLogger:
             self.add_custom_fields(
                 info['response'], flow.response, self.config['response']['fields'])
 
-        info['request']['headers'] = filter_headers(
-            dict(flow.request.headers), config['request']['headers'])
-        info['response']['headers'] = filter_headers(
-            dict(flow.response.headers), config['response']['headers'])
+        info['request']['headers'] = self.filter_headers(
+            dict(flow.request.headers), self.config['request']['headers'])
+        info['response']['headers'] = self.filter_headers(
+            dict(flow.response.headers), self.config['response']['headers'])
 
         logging.info(json.dumps(info, indent=2))
 

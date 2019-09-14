@@ -1,27 +1,22 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+
 import {
-  Row,
   Container,
+  Row,
   Col,
   Button,
   Form,
-  Checkbox,
   FormGroup,
   Label,
   Input,
-  FormText,
-  CustomInput,
-  InputGroup,
-  InputGroupAddon,
-  InputGroupText,
 } from 'reactstrap';
 import { get, set, omit, remove } from 'lodash';
 import { MdRemoveCircle as MdCancel } from 'react-icons/md';
 
-import * as api from '../api/config';
+import { optionalHttpHeaders, optionalHttpRequestFields } from './HttpConsts';
 import AutoSuggestionInput from './AutoSuggest';
-import { optionalHttpHeaders, optionalHttpFields } from './HttpConsts';
+import * as api from '../api/config';
 
 class ConfigEditor extends React.Component {
   constructor(props) {
@@ -49,9 +44,9 @@ class ConfigEditor extends React.Component {
     c = omit(c, [
       'loaded',
       'add_field_to_request.headers',
+      'add_field_to_response.headers',
       'add_field_to_request.fields',
       'add_field_to_response.fields',
-      'add_field_to_response.headers',
       'request.includeAllHeaders',
       'response.includeAllHeaders',
     ]);
@@ -63,7 +58,7 @@ class ConfigEditor extends React.Component {
       await api.saveConfig(c);
       alert('Config saved!');
     } catch {
-      alert('Error: server might be down.');
+      alert('Error: server might be down. Please contact your administrator.');
     }
   }
 
@@ -211,7 +206,7 @@ class ConfigEditor extends React.Component {
                   {this.renderFields(
                     'request.fields',
                     'Add HTTP field',
-                    optionalHttpFields,
+                    optionalHttpRequestFields,
                   )}
                 </div>
               </FormGroup>
@@ -238,11 +233,7 @@ class ConfigEditor extends React.Component {
               <FormGroup>
                 <h3>Additional response fields</h3>
                 <div>
-                  {this.renderFields(
-                    'response.fields',
-                    'Add HTTP field',
-                    optionalHttpFields,
-                  )}
+                  {this.renderFields('response.fields', 'Add HTTP field', [])}
                 </div>
               </FormGroup>
             </Col>
@@ -255,7 +246,6 @@ class ConfigEditor extends React.Component {
 }
 
 ConfigEditor.defaultProps = {};
-
 ConfigEditor.propTypes = {};
 
 export default ConfigEditor;

@@ -1,10 +1,12 @@
-export const optionalHttpFields = [
+export const optionalHttpRequestFields = [
   'method',
   'url',
   'host',
   'version',
   'scheme',
 ];
+
+export const optionalHttpResponseFields = [];
 
 export const optionalHttpHeaders = [
   'Access-Control-Allow-Credentials',
