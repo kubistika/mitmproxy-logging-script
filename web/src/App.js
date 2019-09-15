@@ -1,8 +1,7 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 import ConfigEditor from './components/ConfigEditor.js';
-import { Container, Row, Col } from 'reactstrap';
+import { Container } from 'reactstrap';
 
 function App() {
   return (

@@ -2,7 +2,7 @@ export const optionalHttpRequestFields = [
   'method',
   'url',
   'host',
-  'version',
+  'http_version',
   'scheme',
 ];
 

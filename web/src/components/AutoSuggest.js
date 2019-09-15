@@ -1,22 +1,7 @@
-import React, { useState } from 'react';
-import {
-  Button,
-  Form,
-  Checkbox,
-  FormGroup,
-  Label,
-  Input,
-  FormText,
-  CustomInput,
-  InputGroup,
-  InputGroupAddon,
-  InputGroupText,
-} from 'reactstrap';
+import React from 'react';
+import { Input } from 'reactstrap';
 
 import Autosuggest from 'react-autosuggest';
-
-// Imagine you have a list of languages that you'd like to autosuggest.
-const optionalFields = ['version', 'url', 'scheme', 'host', 'method'];
 
 // Teach Autosuggest how to calculate suggestions for any given input value.
 

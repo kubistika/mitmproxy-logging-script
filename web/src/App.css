@@ -62,7 +62,6 @@ h3 {
 .react-autosuggest__suggestions-container--open {
   display: block;
   position: absolute;
-  top: 51px;
   width: 280px;
   border: 1px solid #aaa;
   background-color: #fff;

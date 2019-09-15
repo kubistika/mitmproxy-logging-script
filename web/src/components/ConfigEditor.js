@@ -1,6 +1,4 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-
+import React from 'react';
 import {
   Container,
   Row,
@@ -11,9 +9,8 @@ import {
   Label,
   Input,
 } from 'reactstrap';
-import { get, set, omit, remove } from 'lodash';
+import { get, set, omit } from 'lodash';
 import { MdRemoveCircle as MdCancel } from 'react-icons/md';
-
 import { optionalHttpHeaders, optionalHttpRequestFields } from './HttpConsts';
 import AutoSuggestionInput from './AutoSuggest';
 import * as api from '../api/config';
@@ -230,12 +227,6 @@ class ConfigEditor extends React.Component {
                     optionalHttpHeaders,
                   )}
               </FormGroup>
-              <FormGroup>
-                <h3>Additional response fields</h3>
-                <div>
-                  {this.renderFields('response.fields', 'Add HTTP field', [])}
-                </div>
-              </FormGroup>
             </Col>
           </Row>
           <Button onClick={() => this.onSubmit()}>Submit</Button>
@@ -244,8 +235,5 @@ class ConfigEditor extends React.Component {
     );
   }
 }
-
-ConfigEditor.defaultProps = {};
-ConfigEditor.propTypes = {};
 
 export default ConfigEditor;

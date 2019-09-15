@@ -1,22 +1,20 @@
 {
+    "logPath": "http_logs_test.txt",
     "request": {
         "headers": [
-            "Content-Encoding",
-            "Content-Type"
+            "*"
         ],
         "fields": [
             "scheme",
             "version",
-            "host"
+            "host",
+            "method"
         ]
     },
     "response": {
         "headers": [
-            "Access-Control-Allow-Headers"
-        ],
-        "fields": [
-            "method"
+            "Content-Type",
+            "Content-Length"
         ]
-    },
-    "logPath": "http_logs.txt"
+    }
 }
